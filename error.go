@@ -42,6 +42,30 @@ func PrependErrorWithRuntimeInfo(err error, msg string, args ...interface{}) err
 	return errorx.Decorate(err, msg, args...)
 }
 
+// PrintPrependErrorWithRuntimeInfo, like `PrependErrorWithRuntimeInfo` but just prints the error
+func PrintPrependErrorWithRuntimeInfo(err error, msg string, args ...interface{}) {
+	pc, _, _, ok := runtime.Caller(1)
+	if ok {
+		fn := runtime.FuncForPC(pc)
+		if fn != nil {
+			runtimeIdent := getRuntimeIdent(fn)
+
+			if err == nil && msg == "" {
+				fmt.Println(fmt.Errorf("%sA CALL TO `PrependErrorWithRuntimeInfo` IS INVALID, `err` == nil && msg == \"\"", runtimeIdent))
+				return
+			}
+
+			if msg != "" {
+				fmt.Println(errorx.Decorate(err, "%s%s", runtimeIdent, fmt.Sprintf(msg, args...)))
+				return
+			}
+			fmt.Println(errorx.Decorate(err, "%s", runtimeIdent))
+			return
+		}
+	}
+	fmt.Println(errorx.Decorate(err, msg, args...))
+}
+
 // getRuntimeIdent, constructs a runtime identifier based on local flags
 func getRuntimeIdent(fn *runtime.Func) string {
 	var (
